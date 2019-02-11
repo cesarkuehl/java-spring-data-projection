@@ -2,6 +2,7 @@ package test.cesarkuehl.ProjectionsTest.controller;
 
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -25,15 +26,18 @@ public class EmployeeController {
 	@PersistenceContext
 	private EntityManager entityManager;
 	
+	@Inject
+	private AbstractQueryBuilder employeeQueryBuilder;
+	
 	@RequestMapping(value = "/listEmployee", method = RequestMethod.GET)
-	public List<EmployeeDTO> listEmployee(String filter, String sort) {
+	public List<EmployeeDTO> listEmployee(String filter, String sort, String displayFields) {
 		QEmployee employee = QEmployee.employee;
 
 		JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
 		JPAQuery query = queryFactory.select(new QEmployeeDTO(employee.name, new QBranchDTO(employee.branch.name))).from(employee);
 		
 		if(filter != null && !filter.isEmpty()) {
-			query = EmployeeQueryBuilder.filter(query, AbstractQueryBuilder.buildPredicate(filter));
+			query = employeeQueryBuilder.filter(query, employeeQueryBuilder.buildPredicate(filter));
 		}
 		
 		return query.fetch();

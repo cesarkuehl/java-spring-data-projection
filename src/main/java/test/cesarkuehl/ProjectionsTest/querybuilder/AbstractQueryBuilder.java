@@ -5,11 +5,11 @@ import com.querydsl.jpa.impl.JPAQuery;
 
 public abstract class AbstractQueryBuilder {
 	
-	protected static String getFirstArg(String value) {
+	protected String getFirstArg(String value) {
 		return value.substring(0,value.indexOf("."));
 	}
 	
-	protected static String getArgsRemovingFirst(String value) {
+	protected String getArgsRemovingFirst(String value) {
 		String[] args = value.split("\\.");
 		String response = "";
 		
@@ -23,7 +23,7 @@ public abstract class AbstractQueryBuilder {
 		return response;
  	}
 	
-	protected static JPAQuery evaluatePredicate(JPAQuery jpaQuery, StringPath stringPath, Predicate predicate) {
+	protected JPAQuery evaluatePredicate(JPAQuery jpaQuery, StringPath stringPath, Predicate predicate) {
 		switch(predicate.getComparator()) {
 			case "eq": jpaQuery.where(stringPath.eq(predicate.getValue()));
 					   break;
@@ -37,7 +37,7 @@ public abstract class AbstractQueryBuilder {
 		return jpaQuery;
 	}
 	
-	public static Predicate buildPredicate(String filter) {
+	public Predicate buildPredicate(String filter) {
 		Predicate predicate = new Predicate();
 		
 		if(filter.toLowerCase().startsWith("containing")) {
@@ -70,5 +70,23 @@ public abstract class AbstractQueryBuilder {
 		
 		return predicate;
 	}
+	
+	public final JPAQuery filter(JPAQuery jpaQuery, Predicate predicate) {
+		if(predicate.getAttribute().contains(".")) {
+			String relationshiptName = getFirstArg(predicate.getAttribute());
+			predicate.setAttribute(getArgsRemovingFirst(predicate.getAttribute()));
+			
+			evaluateFilterRelationship(jpaQuery, predicate, relationshiptName);
+		}
+		else {
+			evaluateFilterAttribute(jpaQuery, predicate);
+		}
+		
+		return jpaQuery;
+	}
+	
+	protected abstract void evaluateFilterRelationship(JPAQuery jpaQuery, Predicate predicate, String relationshipName);
+	
+	protected abstract void evaluateFilterAttribute(JPAQuery jpaQuery, Predicate predicate);
 	
 }
